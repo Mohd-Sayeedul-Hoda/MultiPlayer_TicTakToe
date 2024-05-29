@@ -57,6 +57,7 @@ func (p *play) inputTurn() {
   var input int8
   fmt.Println(p.whoesTrun(), "player enter 1 to 9 to input")
   p.buildBord()
+  var row, col int8
   for{
     _, err := fmt.Scan(&input)
     if err != nil{
@@ -64,11 +65,14 @@ func (p *play) inputTurn() {
       continue
     }
     if input >= 0 && input <= 9{
+      row, col = p.inputToGameData(input - 1)
+      if p.alreadyInput(row, col){
+        fmt.Println("Input already taken")
+        continue
+      }
       break
     }
-    fmt.Println("Enter the input between 1 to 9 ")
   }
-  row, col := p.inputToGameData(input - 1)
   if p.turn{
     p.gameData[row][col] = 1
   }else{
@@ -83,11 +87,37 @@ func (p *play) inputToGameData(input int8) (int8, int8){
   return row, col
 }
 
+func (p *play) alreadyInput(row, col int8) bool{
+  if p.gameData[row][col] == 1 || p.gameData[row][col] == 2{
+    return true
+  }
+  return false
+}
+
+func (p *play) gameWon() bool{
+  for i := 0; i < 3; i++{
+    if p.gameData[i][0] != 0 && p.gameData[i][0] == p.gameData[i][1] && p.gameData[i][1] == p.gameData[i][2]{
+      if p.gameData[i][0] == 1 {
+        fmt.Println("X won the game")
+        return true
+      }else{ 
+        fmt.Println("O won the game")
+        return true
+      }
+    }else if p.gameData[0][i] != 0 && p.gameData[0][i] == p.gameData[1][i] && p.gameData[1][i] == p.gameData[2][i]{
+      if p.gameData[0][i] == 1 {
+        fmt.Println("X won the game")
+        return true
+      }else{ 
+        fmt.Println("O won the game")
+        return true
+      }
+  }
+}
+
 func main(){
   p := &play{
     turn: true,
   }
-  for{
-    p.inputTurn()
-  }
+  p.inputTurn()
 }

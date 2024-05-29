@@ -68,6 +68,7 @@ func (p *play) startGame(){
       p.turn = !p.turn
       p.gameWon()
     }else{
+      p.buildBord()
       break
     }
   }
@@ -142,10 +143,7 @@ func (p *play) gameWon() {
         fmt.Println("O won the game")
       }
   } 
-
-
 }
-
 
 func main(){
   p := &play{

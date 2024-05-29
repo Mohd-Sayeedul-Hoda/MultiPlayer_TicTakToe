@@ -47,10 +47,8 @@ func (p *play) buildBord() {
 
 func (p *play) whoesTrun() string{
   if p.turn {
-    p.turn = false
     return "X"
   }else{
-    p.turn = true
     return "O"
   } 
 }
@@ -58,18 +56,38 @@ func (p *play) whoesTrun() string{
 func (p *play) inputTurn() {
   var input int8
   fmt.Println(p.whoesTrun(), "player enter 1 to 9 to input")
+  p.buildBord()
   for{
-    fmt.Scan(&input)
+    _, err := fmt.Scan(&input)
+    if err != nil{
+      fmt.Println("Please enter the number")
+      continue
+    }
     if input >= 0 && input <= 9{
       break
     }
     fmt.Println("Enter the input between 1 to 9 ")
   }
+  row, col := p.inputToGameData(input - 1)
+  if p.turn{
+    p.gameData[row][col] = 1
+  }else{
+    p.gameData[row][col] = 2
+  }
+  p.turn = !p.turn
+}
+
+func (p *play) inputToGameData(input int8) (int8, int8){
+  row := (input / 3) 
+  col := (input % 3) 
+  return row, col
 }
 
 func main(){
   p := &play{
     turn: true,
   }
-  p.inputTurn()
+  for{
+    p.inputTurn()
+  }
 }

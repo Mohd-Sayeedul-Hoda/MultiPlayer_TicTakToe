@@ -54,10 +54,26 @@ func (p *play) whoesTrun() string{
   } 
 }
 
-func (p *play) inputTurn() {
+func (p *play) startGame(){
+  for {
+    if p.playAble{
+      fmt.Println(p.whoesTrun(), "player enter 1 to 9 to input")
+      p.buildBord()
+      row, col := p.inputTurn()
+      if p.turn{
+        p.gameData[row][col] = 1
+      }else{
+        p.gameData[row][col] = 2
+      }
+      p.turn = !p.turn
+      p.gameWon()
+    }else{
+      break
+    }
+  }
+}
+func (p *play) inputTurn() (int8, int8){
   var input int8
-  fmt.Println(p.whoesTrun(), "player enter 1 to 9 to input")
-  p.buildBord()
   var row, col int8
   for{
     _, err := fmt.Scan(&input)
@@ -74,13 +90,7 @@ func (p *play) inputTurn() {
       break
     }
   }
-  if p.turn{
-    p.gameData[row][col] = 1
-  }else{
-    p.gameData[row][col] = 2
-  }
-  p.turn = !p.turn
-  p.gameWon()
+  return row, col
 }
 
 func (p *play) inputToGameData(input int8) (int8, int8){
@@ -136,16 +146,11 @@ func (p *play) gameWon() {
 
 }
 
+
 func main(){
   p := &play{
     turn: true,
     playAble: true,
   }
-  for{
-    if p.playAble{
-      p.inputTurn()
-    }else{
-      break
-    }
-  }
+  p.startGame()
 }

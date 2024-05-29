@@ -7,6 +7,7 @@ import(
 type play struct{
   gameData [3][3]int8
   turn bool
+  playAble bool
 }
   /*
   x | o | x 
@@ -79,6 +80,7 @@ func (p *play) inputTurn() {
     p.gameData[row][col] = 2
   }
   p.turn = !p.turn
+  p.gameWon()
 }
 
 func (p *play) inputToGameData(input int8) (int8, int8){
@@ -94,30 +96,56 @@ func (p *play) alreadyInput(row, col int8) bool{
   return false
 }
 
-func (p *play) gameWon() bool{
+func (p *play) gameWon() {
   for i := 0; i < 3; i++{
     if p.gameData[i][0] != 0 && p.gameData[i][0] == p.gameData[i][1] && p.gameData[i][1] == p.gameData[i][2]{
+      p.playAble = false
       if p.gameData[i][0] == 1 {
         fmt.Println("X won the game")
-        return true
       }else{ 
         fmt.Println("O won the game")
-        return true
       }
     }else if p.gameData[0][i] != 0 && p.gameData[0][i] == p.gameData[1][i] && p.gameData[1][i] == p.gameData[2][i]{
+      p.playAble = false
       if p.gameData[0][i] == 1 {
         fmt.Println("X won the game")
-        return true
       }else{ 
         fmt.Println("O won the game")
-        return true
       }
+    }
   }
+  // X this line checking
+  if p.gameData[0][0] != 0 && p.gameData[0][0] == p.gameData[1][1] && p.gameData[1][1] == p.gameData[2][2]{
+      p.playAble = false
+      if p.gameData[0][0] == 1 {
+        fmt.Println("X won the game")
+      }else{ 
+        fmt.Println("O won the game")
+      }
+  } 
+
+  if p.gameData[0][2] != 0 && p.gameData[0][2] == p.gameData[1][1] && p.gameData[1][1] == p.gameData[2][0]{
+      p.playAble = false
+      if p.gameData[0][2] == 1 {
+        fmt.Println("X won the game")
+      }else{ 
+        fmt.Println("O won the game")
+      }
+  } 
+
+
 }
 
 func main(){
   p := &play{
     turn: true,
+    playAble: true,
   }
-  p.inputTurn()
+  for{
+    if p.playAble{
+      p.inputTurn()
+    }else{
+      break
+    }
+  }
 }

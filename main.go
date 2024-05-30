@@ -5,10 +5,17 @@ import(
 )
 
 type play struct{
-  gameData [3][3]int8
+  gameData [3][3]uint8
   turn bool
   playAble bool
 }
+
+const (
+  EmptyCell uint8 = iota
+  PlayerX 
+  PlayerY 
+)
+
   /*
   x | o | x 
  ---|---|---
@@ -17,11 +24,11 @@ type play struct{
   x | x | o 
 */
 
-func whatToPrint(o int8) string{
+func whatToPrint(o uint8) string{
   toPrint := ""
-  if o == 0 {
+  if o == EmptyCell {
     toPrint += fmt.Sprintf("   ")
-  }else if o == 1{
+  }else if o == PlayerX{
     toPrint += fmt.Sprintf(" X ")
   }else{ 
     toPrint += fmt.Sprintf(" O ")
@@ -73,9 +80,9 @@ func (p *play) startGame(){
     }
   }
 }
-func (p *play) inputTurn() (int8, int8){
-  var input int8
-  var row, col int8
+func (p *play) inputTurn() (uint8, uint8){
+  var input uint8
+  var row, col uint8
   for{
     _, err := fmt.Scan(&input)
     if err != nil{
@@ -94,14 +101,14 @@ func (p *play) inputTurn() (int8, int8){
   return row, col
 }
 
-func (p *play) inputToGameData(input int8) (int8, int8){
+func (p *play) inputToGameData(input uint8) (uint8, uint8){
   row := (input / 3) 
   col := (input % 3) 
   return row, col
 }
 
-func (p *play) alreadyInput(row, col int8) bool{
-  if p.gameData[row][col] == 1 || p.gameData[row][col] == 2{
+func (p *play) alreadyInput(row, col uint8) bool{
+  if p.gameData[row][col] != EmptyCell{
     return true
   }
   return false
@@ -109,16 +116,16 @@ func (p *play) alreadyInput(row, col int8) bool{
 
 func (p *play) gameWon() {
   for i := 0; i < 3; i++{
-    if p.gameData[i][0] != 0 && p.gameData[i][0] == p.gameData[i][1] && p.gameData[i][1] == p.gameData[i][2]{
+    if p.gameData[i][0] != EmptyCell && p.gameData[i][0] == p.gameData[i][1] && p.gameData[i][1] == p.gameData[i][2]{
       p.playAble = false
-      if p.gameData[i][0] == 1 {
+      if p.gameData[i][0] == PlayerX{
         fmt.Println("X won the game")
       }else{ 
         fmt.Println("O won the game")
       }
-    }else if p.gameData[0][i] != 0 && p.gameData[0][i] == p.gameData[1][i] && p.gameData[1][i] == p.gameData[2][i]{
+    }else if p.gameData[0][i] != EmptyCell && p.gameData[0][i] == p.gameData[1][i] && p.gameData[1][i] == p.gameData[2][i]{
       p.playAble = false
-      if p.gameData[0][i] == 1 {
+      if p.gameData[0][i] == PlayerX{
         fmt.Println("X won the game")
       }else{ 
         fmt.Println("O won the game")
@@ -126,18 +133,18 @@ func (p *play) gameWon() {
     }
   }
   // X this line checking
-  if p.gameData[0][0] != 0 && p.gameData[0][0] == p.gameData[1][1] && p.gameData[1][1] == p.gameData[2][2]{
+  if p.gameData[0][0] != EmptyCell && p.gameData[0][0] == p.gameData[1][1] && p.gameData[1][1] == p.gameData[2][2]{
       p.playAble = false
-      if p.gameData[0][0] == 1 {
+      if p.gameData[0][0] == PlayerX{
         fmt.Println("X won the game")
       }else{ 
         fmt.Println("O won the game")
       }
   } 
 
-  if p.gameData[0][2] != 0 && p.gameData[0][2] == p.gameData[1][1] && p.gameData[1][1] == p.gameData[2][0]{
+  if p.gameData[0][2] != EmptyCell && p.gameData[0][2] == p.gameData[1][1] && p.gameData[1][1] == p.gameData[2][0]{
       p.playAble = false
-      if p.gameData[0][2] == 1 {
+      if p.gameData[0][2] == PlayerX{
         fmt.Println("X won the game")
       }else{ 
         fmt.Println("O won the game")
@@ -146,9 +153,9 @@ func (p *play) gameWon() {
 }
 
 func main(){
-  p := &play{
+  game := &play{
     turn: true,
     playAble: true,
   }
-  p.startGame()
+  game.startGame()
 }

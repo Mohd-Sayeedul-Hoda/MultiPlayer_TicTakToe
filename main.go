@@ -2,6 +2,8 @@ package main
 
 import(
   "fmt"
+  "flag"
+  "net"
 )
 
 type play struct{
@@ -152,7 +154,45 @@ func (p *play) gameWon() {
   } 
 }
 
+func createTCP() (net.Conn, error){
+  listen, err := net.Listen("tcp", ":7000")
+  if err != nil{
+    return nil, err
+  }
+  conn, err := listen.Accept()
+  if err != nil{
+    return nil, err
+  }
+  return conn, nil
+}
+
+func joinTCP() (net.Conn, error){
+  conn, err := net.Dial("tcp", ":7000")
+  if err != nil{
+    return nil, err
+  }
+  return conn, nil
+}
+
 func main(){
+  host := flag.Bool("host", false, "To host the game")
+  flag.Parse()
+  var conn net.Conn
+  var err error
+  if *host{
+    conn, err = createTCP()
+    if err != nil{
+      fmt.Println("Unable to host the game: " , err)
+      return
+    }
+  }else{
+    conn, err = joinTCP()
+    if err != nil{
+      fmt.Println("Unable to join the host game: " , err)
+      return
+    }
+  }
+  fmt.Println(conn)
   game := &play{
     turn: true,
     playAble: true,

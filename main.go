@@ -66,12 +66,11 @@ func (p *play) whoesTrun() string{
 }
 
 func (p *play) startGame(conn net.Conn){
-  reader := bufio.NewReader(conn)
   for {
     if p.playAble{
       fmt.Println(p.whoesTrun(), "player enter 1 to 9 to input")
       p.buildBord()
-      row, col := p.inputTurn(reader)
+      row, col := p.inputTurn(conn)
       if p.turn{
         p.gameData[row][col] = PlayerX
       }else{
@@ -86,10 +85,11 @@ func (p *play) startGame(conn net.Conn){
   }
 }
 
-func (p *play) inputTurn(reader *bufio.Reader) (uint8, uint8){
+func (p *play) inputTurn(conn net.Conn) (uint8, uint8){
   var input uint8
   var row, col uint8
   var err error
+  reader := bufio.NewReader(conn)
   for{
     if p.host && p.turn{
       _, err = fmt.Scan(&input)
@@ -97,18 +97,20 @@ func (p *play) inputTurn(reader *bufio.Reader) (uint8, uint8){
         fmt.Println("Please enter the number")
         continue
       }
+      conn.Write([]byte{input})
     }else if p.host && !p.turn{
       fmt.Println("Wating for player O")
       input, err = reader.ReadByte()
       if err != nil{
-        fmt.Println("Cannot read from the network terminting game")
+        fmt.Println("Cannot read from the network terminating game")
         p.playAble = false
         return 0, 0
       }
     }else if !p.host && p.turn{
+      fmt.Println("Wating for player X")
       input, err = reader.ReadByte()
       if err != nil{
-        fmt.Println("Cannot read from the network terminting game")
+        fmt.Println("Cannot read from the network terminating game")
         p.playAble = false
         return 0, 0
       }
@@ -118,6 +120,7 @@ func (p *play) inputTurn(reader *bufio.Reader) (uint8, uint8){
         fmt.Println("Please enter the number")
         continue
       }
+      conn.Write([]byte{input})
     }
     if input >= 0 && input <= 9{
       row, col = p.inputToGameData(input - 1)
@@ -144,6 +147,7 @@ func (p *play) alreadyInput(row, col uint8) bool{
   return false
 }
 
+// I can use just a loop here. Noting but overthinking 
 func (p *play) gameWon() {
   for i := 0; i < 3; i++{
     if p.gameData[i][0] != EmptyCell && p.gameData[i][0] == p.gameData[i][1] && p.gameData[i][1] == p.gameData[i][2]{

@@ -1,21 +1,23 @@
 package main
 
-import(
-  "fmt"
-  "flag"
-  "net"
+import (
+	"bufio"
+	"flag"
+	"fmt"
+	"net"
 )
 
 type play struct{
   gameData [3][3]uint8
   turn bool
   playAble bool
+  host bool
 }
 
 const (
   EmptyCell uint8 = iota
   PlayerX 
-  PlayerY 
+  PlayerO 
 )
 
   /*
@@ -63,16 +65,17 @@ func (p *play) whoesTrun() string{
   } 
 }
 
-func (p *play) startGame(){
+func (p *play) startGame(conn net.Conn){
+  reader := bufio.NewReader(conn)
   for {
     if p.playAble{
       fmt.Println(p.whoesTrun(), "player enter 1 to 9 to input")
       p.buildBord()
-      row, col := p.inputTurn()
+      row, col := p.inputTurn(reader)
       if p.turn{
-        p.gameData[row][col] = 1
+        p.gameData[row][col] = PlayerX
       }else{
-        p.gameData[row][col] = 2
+        p.gameData[row][col] = PlayerO
       }
       p.turn = !p.turn
       p.gameWon()
@@ -82,14 +85,39 @@ func (p *play) startGame(){
     }
   }
 }
-func (p *play) inputTurn() (uint8, uint8){
+
+func (p *play) inputTurn(reader *bufio.Reader) (uint8, uint8){
   var input uint8
   var row, col uint8
+  var err error
   for{
-    _, err := fmt.Scan(&input)
-    if err != nil{
-      fmt.Println("Please enter the number")
-      continue
+    if p.host && p.turn{
+      _, err = fmt.Scan(&input)
+      if err != nil{
+        fmt.Println("Please enter the number")
+        continue
+      }
+    }else if p.host && !p.turn{
+      fmt.Println("Wating for player O")
+      input, err = reader.ReadByte()
+      if err != nil{
+        fmt.Println("Cannot read from the network terminting game")
+        p.playAble = false
+        return 0, 0
+      }
+    }else if !p.host && p.turn{
+      input, err = reader.ReadByte()
+      if err != nil{
+        fmt.Println("Cannot read from the network terminting game")
+        p.playAble = false
+        return 0, 0
+      }
+    }else{
+      _, err = fmt.Scan(&input)
+      if err != nil{
+        fmt.Println("Please enter the number")
+        continue
+      }
     }
     if input >= 0 && input <= 9{
       row, col = p.inputToGameData(input - 1)
@@ -97,8 +125,8 @@ func (p *play) inputTurn() (uint8, uint8){
         fmt.Println("Input already taken")
         continue
       }
-      break
     }
+    break
   }
   return row, col
 }
@@ -174,6 +202,22 @@ func joinTCP() (net.Conn, error){
   return conn, nil
 }
 
+func readFromSocket(reader *bufio.Reader)(uint8, error){
+  input, err := reader.ReadByte()
+  if err != nil{
+    return input, err
+  }
+  return input, nil
+}
+
+func WriteToSocket(conn net.Conn, value uint8) (error){
+  _, err := conn.Write([]byte{value})
+  if err != nil{
+    return err
+  }
+  return nil
+}
+
 func main(){
   host := flag.Bool("host", false, "To host the game")
   flag.Parse()
@@ -192,10 +236,11 @@ func main(){
       return
     }
   }
-  fmt.Println(conn)
+
   game := &play{
     turn: true,
     playAble: true,
+    host: *host,
   }
-  game.startGame()
+  game.startGame(conn)
 }

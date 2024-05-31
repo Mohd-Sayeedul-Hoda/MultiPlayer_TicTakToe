@@ -28,24 +28,25 @@ const (
   x | x | o 
 */
 
-func whatToPrint(o uint8) string{
-  toPrint := ""
-  if o == EmptyCell {
-    toPrint += fmt.Sprintf("   ")
-  }else if o == PlayerX{
-    toPrint += fmt.Sprintf(" X ")
-  }else{ 
-    toPrint += fmt.Sprintf(" O ")
-  }
-  return toPrint
+func cellToString(cell uint8) string{
+switch cell {
+	case EmptyCell:
+		return "   "
+	case PlayerX:
+		return " X "
+	case PlayerO:
+		return " O "
+	default:
+		return "   "
+	}
 }
 
 
 func (p *play) buildBord() {
-  for x := 0; x <= 2; x++{
+  for x := 0; x < 3; x++{
     var toPrint string
-    for y := 0; y <= 2; y++{
-      toPrint += whatToPrint(p.gameData[x][y])
+    for y := 0; y < 3; y++{
+      toPrint += cellToString(p.gameData[x][y])
       if y != 2{
         toPrint += "|"
       }
@@ -70,14 +71,14 @@ func (p *play) startGame(conn net.Conn){
     if p.playAble{
       fmt.Println(p.whoesTrun(), "player enter 1 to 9 to input")
       p.buildBord()
-      row, col := p.inputTurn(conn)
+      row, col := p.getInput(conn)
       if p.turn{
         p.gameData[row][col] = PlayerX
       }else{
         p.gameData[row][col] = PlayerO
       }
       p.turn = !p.turn
-      p.gameWon()
+      p.checkGameWon()
     }else{
       p.buildBord()
       break
@@ -85,7 +86,7 @@ func (p *play) startGame(conn net.Conn){
   }
 }
 
-func (p *play) inputTurn(conn net.Conn) (uint8, uint8){
+func (p *play) getInput(conn net.Conn) (uint8, uint8){
   var input uint8
   var row, col uint8
   var err error
@@ -135,9 +136,7 @@ func (p *play) inputTurn(conn net.Conn) (uint8, uint8){
 }
 
 func (p *play) inputToGameData(input uint8) (uint8, uint8){
-  row := (input / 3) 
-  col := (input % 3) 
-  return row, col
+  return input / 3, input % 3 
 }
 
 func (p *play) alreadyInput(row, col uint8) bool{
@@ -147,50 +146,57 @@ func (p *play) alreadyInput(row, col uint8) bool{
   return false
 }
 
-// I can use just a loop here. Noting but overthinking 
-func (p *play) gameWon() {
-  for i := 0; i < 3; i++{
-    if p.gameData[i][0] != EmptyCell && p.gameData[i][0] == p.gameData[i][1] && p.gameData[i][1] == p.gameData[i][2]{
-      p.playAble = false
-      if p.gameData[i][0] == PlayerX{
-        fmt.Println("X won the game")
-      }else{ 
-        fmt.Println("O won the game")
-      }
-    }else if p.gameData[0][i] != EmptyCell && p.gameData[0][i] == p.gameData[1][i] && p.gameData[1][i] == p.gameData[2][i]{
-      p.playAble = false
-      if p.gameData[0][i] == PlayerX{
-        fmt.Println("X won the game")
-      }else{ 
-        fmt.Println("O won the game")
-      }
-    }
-  }
-  // X this line checking
-  if p.gameData[0][0] != EmptyCell && p.gameData[0][0] == p.gameData[1][1] && p.gameData[1][1] == p.gameData[2][2]{
-      p.playAble = false
-      if p.gameData[0][0] == PlayerX{
-        fmt.Println("X won the game")
-      }else{ 
-        fmt.Println("O won the game")
-      }
-  } 
-
-  if p.gameData[0][2] != EmptyCell && p.gameData[0][2] == p.gameData[1][1] && p.gameData[1][1] == p.gameData[2][0]{
-      p.playAble = false
-      if p.gameData[0][2] == PlayerX{
-        fmt.Println("X won the game")
-      }else{ 
-        fmt.Println("O won the game")
-      }
-  } 
+func (p *play) checkGameWon() {
+	if p.checkRows() || p.checkColumns() || p.checkDiagonals() {
+		p.playAble = false
+	}
 }
 
+func (p *play) checkRows() bool {
+	for i := 0; i < 3; i++ {
+		if p.gameData[i][0] != EmptyCell && p.gameData[i][0] == p.gameData[i][1] && p.gameData[i][1] == p.gameData[i][2] {
+			p.declareWinner(p.gameData[i][0])
+			return true
+		}
+	}
+	return false
+}
+
+func (p *play) checkColumns() bool {
+	for i := 0; i < 3; i++ {
+		if p.gameData[0][i] != EmptyCell && p.gameData[0][i] == p.gameData[1][i] && p.gameData[1][i] == p.gameData[2][i] {
+			p.declareWinner(p.gameData[0][i])
+			return true
+		}
+	}
+	return false
+}
+
+func (p *play) checkDiagonals() bool {
+	if p.gameData[0][0] != EmptyCell && p.gameData[0][0] == p.gameData[1][1] && p.gameData[1][1] == p.gameData[2][2] {
+		p.declareWinner(p.gameData[0][0])
+		return true
+	}
+	if p.gameData[0][2] != EmptyCell && p.gameData[0][2] == p.gameData[1][1] && p.gameData[1][1] == p.gameData[2][0] {
+		p.declareWinner(p.gameData[0][2])
+		return true
+	}
+	return false
+}
+
+func (p *play) declareWinner(player uint8) {
+	if player == PlayerX {
+		fmt.Println("X won the game")
+	} else {
+		fmt.Println("O won the game")
+	}
+}
 func createTCP() (net.Conn, error){
   listen, err := net.Listen("tcp", ":7000")
   if err != nil{
     return nil, err
   }
+  fmt.Println("Wating for player O to join")
   conn, err := listen.Accept()
   if err != nil{
     return nil, err
@@ -203,6 +209,7 @@ func joinTCP() (net.Conn, error){
   if err != nil{
     return nil, err
   }
+  fmt.Println("Join the game successfully")
   return conn, nil
 }
 
